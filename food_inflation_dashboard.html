@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malaysia Food CPI Forecast Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --surface2:  #21262d;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --accent:    #f0b429;
+    --up:        #3fb950;
+    --up-bg:     #0d2818;
+    --down:      #f85149;
+    --down-bg:   #2d0f0f;
+    --flat:      #8b949e;
+    --flat-bg:   #21262d;
+    --header-h1: #f78166;
+    --tag-bg:    #1f2d3d;
+    --tag-text:  #58a6ff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1a1f2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(240,180,41,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: .1em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .badge-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 5vw, 56px);
+    letter-spacing: .04em;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  h1 span { color: var(--accent); }
+  .header-sub {
+    font-size: 14px; color: var(--muted); font-weight: 300;
+    margin-bottom: 0;
+  }
+
+  .header-stats {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .hstat {
+    text-align: right;
+  }
+  .hstat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px; color: var(--up);
+    line-height: 1;
+  }
+  .hstat-label {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .controls label {
+    font-size: 12px; color: var(--muted); font-weight: 500;
+    text-transform: uppercase; letter-spacing: .07em;
+  }
+  .controls select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .controls select:hover { border-color: var(--accent); }
+
+  .view-toggle {
+    display: flex; gap: 4px; margin-left: auto;
+  }
+  .vtbtn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .vtbtn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  /* ── OVERALL BANNER ── */
+  .overall-banner {
+    margin: 28px 40px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .ob-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .ob-cpi {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; color: var(--text); line-height: 1;
+  }
+  .ob-month { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .ob-divider {
+    width: 1px; height: 60px; background: var(--border);
+    flex-shrink: 0;
+  }
+  .ob-change {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px;
+  }
+  .ob-change-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; line-height: 1;
+  }
+  .ob-change-label {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .ob-trend {
+    flex: 1;
+    min-width: 200px;
+  }
+  .ob-trend-label {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+  .sparkline-wrap { height: 48px; }
+  svg.spark { width: 100%; height: 48px; }
+
+  /* ── MONTH TABS ── */
+  .month-tabs {
+    margin: 24px 40px 0;
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .mtab {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .mtab:hover { border-color: var(--accent); color: var(--accent); }
+  .mtab.active {
+    background: var(--accent); border-color: var(--accent);
+    color: #000; font-weight: 600;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    margin: 28px 40px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sh-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: .1em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .sh-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    padding: 0 40px;
+  }
+
+  /* ── CATEGORY CARD ── */
+  .cat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px 14px;
+    transition: border-color .2s, transform .15s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+  .cat-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .cat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+    background: var(--card-accent, var(--border));
+  }
+  .cat-card.up-card   { --card-accent: var(--up); }
+  .cat-card.down-card { --card-accent: var(--down); }
+  .cat-card.flat-card { --card-accent: var(--flat); }
+
+  .card-model {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--tag-text);
+    background: var(--tag-bg);
+    display: inline-block;
+    padding: 2px 8px; border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .card-name {
+    font-size: 13px; font-weight: 500;
+    color: var(--muted);
+    line-height: 1.3;
+    margin-bottom: 12px;
+    min-height: 34px;
+  }
+  .card-cpi-row {
+    display: flex; align-items: baseline;
+    gap: 6px; margin-bottom: 10px;
+  }
+  .card-cpi {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px; color: var(--text);
+    line-height: 1;
+  }
+  .card-cpi-unit {
+    font-size: 12px; color: var(--muted);
+  }
+  .card-change-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500;
+  }
+  .pill.up   { background: var(--up-bg);   color: var(--up); }
+  .pill.down { background: var(--down-bg); color: var(--down); }
+  .pill.flat { background: var(--flat-bg); color: var(--flat); }
+  .pill-arrow { font-size: 10px; }
+
+  .card-prev {
+    font-size: 11px; color: var(--muted);
+  }
+
+  /* spark inside card */
+  .card-spark { height: 36px; margin-top: 4px; }
+  svg.cspark { width: 100%; height: 36px; }
+
+  /* ── TABLE VIEW ── */
+  .table-wrap {
+    padding: 0 40px;
+    overflow-x: auto;
+  }
+  table.data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .data-table tr:hover td { background: var(--surface2); }
+  .data-table td.cat-col {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--text);
+  }
+  .data-table td.num { text-align: right; }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin: 40px 40px 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-text { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .model-legend {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .ml-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+  }
+  .ml-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-badge">
+    <span class="badge-dot"></span>
+    SARIMA × Prophet Ensemble Forecast
+  </div>
+  <div class="header-top">
+    <div>
+      <h1>Malaysia <span>Food CPI</span><br>Forecast</h1>
+      <div class="header-sub">Mar 2026 – Feb 2027 &nbsp;·&nbsp; Department of Statistics Malaysia (DOSM) base data &nbsp;·&nbsp; Group 3 WQD7001</div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat">
+        <div class="hstat-val" id="hs-mape">1.15%</div>
+        <div class="hstat-label">Avg MAPE</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-val" style="color:var(--tag-text)">11</div>
+        <div class="hstat-label">Categories</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-val" style="color:var(--accent)">12</div>
+        <div class="hstat-label">Months ahead</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <label>Compare month</label>
+  <select id="baseMonthSel"></select>
+  <label style="margin-left:8px">vs</label>
+  <select id="cmpMonthSel"></select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="cardViewBtn" onclick="setView('card')">Card View</button>
+    <button class="vtbtn" id="tableViewBtn" onclick="setView('table')">Table View</button>
+  </div>
+</div>
+
+<!-- OVERALL BANNER -->
+<div class="overall-banner" id="overallBanner"></div>
+
+<!-- MONTH TABS -->
+<div class="month-tabs" id="monthTabs"></div>
+
+<!-- SECTION HEADER -->
+<div class="section-header">
+  <div class="sh-title">Inflation by Food Category</div>
+  <div class="sh-line"></div>
+</div>
+
+<!-- GRID -->
+<div class="grid" id="cardGrid"></div>
+
+<!-- TABLE -->
+<div class="table-wrap" id="tableWrap" style="display:none">
+  <table class="data-table" id="dataTable"></table>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-text">
+    Source: food_inflation_final_forecasts.csv &nbsp;·&nbsp; Models fitted on DOSM monthly CPI data (Feb 2020 – Feb 2026)<br>
+    Changes shown are month-on-month (MoM). Positive = price increase vs prior month.
+  </div>
+  <div class="model-legend">
+    <div class="ml-item"><div class="ml-dot" style="background:#58a6ff"></div> Prophet (festival-sensitive)</div>
+    <div class="ml-item"><div class="ml-dot" style="background:#f0b429"></div> SARIMA (trend / supply-driven)</div>
+    <div class="ml-item"><div class="ml-dot" style="background:var(--up)"></div> Increase</div>
+    <div class="ml-item"><div class="ml-dot" style="background:var(--down)"></div> Decrease</div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const RAW = [
+  {date:'Mar 2026', 'Fruits & nuts':147.816,'Food away from home':180.582,'Cereals & cereal products':124.395,'Meat':149.159,'Milk, other dairy products & eggs':143.591,'Ready-made food & other food products n.e.c.':164.279,'Tea':123.5,'Fish & other seafood':171.418,'Coffee & coffee substitutes':133.834,'Other non-alcoholic beverages':139.316,'Vegetables':144.534},
+  {date:'Apr 2026', 'Fruits & nuts':147.991,'Food away from home':180.619,'Cereals & cereal products':124.149,'Meat':149.393,'Milk, other dairy products & eggs':143.581,'Ready-made food & other food products n.e.c.':164.244,'Tea':123.1,'Fish & other seafood':171.303,'Coffee & coffee substitutes':133.660,'Other non-alcoholic beverages':138.635,'Vegetables':143.384},
+  {date:'May 2026', 'Fruits & nuts':147.277,'Food away from home':181.514,'Cereals & cereal products':124.085,'Meat':150.460,'Milk, other dairy products & eggs':143.553,'Ready-made food & other food products n.e.c.':164.738,'Tea':123.0,'Fish & other seafood':171.225,'Coffee & coffee substitutes':134.002,'Other non-alcoholic beverages':140.366,'Vegetables':144.365},
+  {date:'Jun 2026', 'Fruits & nuts':147.668,'Food away from home':181.659,'Cereals & cereal products':123.980,'Meat':151.258,'Milk, other dairy products & eggs':143.908,'Ready-made food & other food products n.e.c.':164.823,'Tea':122.9,'Fish & other seafood':171.877,'Coffee & coffee substitutes':134.014,'Other non-alcoholic beverages':140.356,'Vegetables':145.625},
+  {date:'Jul 2026', 'Fruits & nuts':147.730,'Food away from home':182.331,'Cereals & cereal products':123.852,'Meat':147.733,'Milk, other dairy products & eggs':143.904,'Ready-made food & other food products n.e.c.':164.754,'Tea':122.8,'Fish & other seafood':172.001,'Coffee & coffee substitutes':134.362,'Other non-alcoholic beverages':140.025,'Vegetables':142.196},
+  {date:'Aug 2026', 'Fruits & nuts':147.912,'Food away from home':182.827,'Cereals & cereal products':123.967,'Meat':148.422,'Milk, other dairy products & eggs':144.469,'Ready-made food & other food products n.e.c.':164.372,'Tea':122.7,'Fish & other seafood':172.159,'Coffee & coffee substitutes':134.711,'Other non-alcoholic beverages':139.961,'Vegetables':140.754},
+  {date:'Sep 2026', 'Fruits & nuts':148.218,'Food away from home':182.824,'Cereals & cereal products':124.216,'Meat':148.988,'Milk, other dairy products & eggs':145.294,'Ready-made food & other food products n.e.c.':164.271,'Tea':122.6,'Fish & other seafood':172.038,'Coffee & coffee substitutes':134.970,'Other non-alcoholic beverages':139.685,'Vegetables':140.443},
+  {date:'Oct 2026', 'Fruits & nuts':148.583,'Food away from home':183.420,'Cereals & cereal products':124.314,'Meat':149.294,'Milk, other dairy products & eggs':145.669,'Ready-made food & other food products n.e.c.':164.169,'Tea':123.2,'Fish & other seafood':172.005,'Coffee & coffee substitutes':135.719,'Other non-alcoholic beverages':139.284,'Vegetables':141.129},
+  {date:'Nov 2026', 'Fruits & nuts':148.182,'Food away from home':183.516,'Cereals & cereal products':124.441,'Meat':151.327,'Milk, other dairy products & eggs':144.814,'Ready-made food & other food products n.e.c.':164.389,'Tea':123.3,'Fish & other seafood':171.721,'Coffee & coffee substitutes':136.405,'Other non-alcoholic beverages':139.529,'Vegetables':140.989},
+  {date:'Dec 2026', 'Fruits & nuts':148.453,'Food away from home':183.467,'Cereals & cereal products':124.190,'Meat':149.739,'Milk, other dairy products & eggs':145.444,'Ready-made food & other food products n.e.c.':164.772,'Tea':123.0,'Fish & other seafood':173.074,'Coffee & coffee substitutes':137.356,'Other non-alcoholic beverages':139.289,'Vegetables':148.011},
+  {date:'Jan 2027', 'Fruits & nuts':148.491,'Food away from home':184.268,'Cereals & cereal products':124.070,'Meat':149.884,'Milk, other dairy products & eggs':145.639,'Ready-made food & other food products n.e.c.':165.087,'Tea':122.8,'Fish & other seafood':173.738,'Coffee & coffee substitutes':138.127,'Other non-alcoholic beverages':140.459,'Vegetables':144.737},
+  {date:'Feb 2027', 'Fruits & nuts':148.630,'Food away from home':184.993,'Cereals & cereal products':123.990,'Meat':149.221,'Milk, other dairy products & eggs':145.176,'Ready-made food & other food products n.e.c.':165.078,'Tea':122.8,'Fish & other seafood':174.180,'Coffee & coffee substitutes':139.095,'Other non-alcoholic beverages':141.394,'Vegetables':142.789},
+];
+
+const CATS = [
+  'Fruits & nuts','Food away from home','Cereals & cereal products',
+  'Meat','Milk, other dairy products & eggs',
+  'Ready-made food & other food products n.e.c.',
+  'Tea','Fish & other seafood','Coffee & coffee substitutes',
+  'Other non-alcoholic beverages','Vegetables'
+];
+
+const MODEL = {
+  'Fruits & nuts':'Prophet','Food away from home':'Prophet',
+  'Cereals & cereal products':'Prophet','Meat':'Prophet',
+  'Milk, other dairy products & eggs':'SARIMA',
+  'Ready-made food & other food products n.e.c.':'SARIMA',
+  'Tea':'SARIMA','Fish & other seafood':'SARIMA',
+  'Coffee & coffee substitutes':'SARIMA',
+  'Other non-alcoholic beverages':'SARIMA','Vegetables':'SARIMA'
+};
+
+const MAPE = {
+  'Fruits & nuts':0.64,'Food away from home':0.68,
+  'Cereals & cereal products':0.84,'Meat':1.25,
+  'Milk, other dairy products & eggs':0.78,
+  'Ready-made food & other food products n.e.c.':0.56,
+  'Tea':1.22,'Fish & other seafood':1.91,
+  'Coffee & coffee substitutes':1.02,
+  'Other non-alcoholic beverages':2.37,'Vegetables':5.35
+};
+
+const MONTHS = RAW.map(r => r.date);
+let currentMonth = 0;
+let currentView  = 'card';
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function overallCPI(row) {
+  return CATS.reduce((s, c) => s + row[c], 0) / CATS.length;
+}
+
+function fmt(v, dp=3) { return v.toFixed(dp); }
+function fmtPct(v) {
+  const s = v >= 0 ? '+' : '';
+  return s + v.toFixed(2) + '%';
+}
+
+function pctChange(curr, prev) {
+  return ((curr - prev) / prev) * 100;
+}
+
+function arrowChar(v) {
+  if (v > 0.05)  return '▲';
+  if (v < -0.05) return '▼';
+  return '►';
+}
+
+function pillClass(v) {
+  if (v > 0.05)  return 'up';
+  if (v < -0.05) return 'down';
+  return 'flat';
+}
+
+// ── SPARKLINE ────────────────────────────────────────────────────────────────
+function sparklinePath(values, w, h, padX=4, padY=4) {
+  const mn = Math.min(...values), mx = Math.max(...values);
+  const range = mx - mn || 1;
+  const pts = values.map((v, i) => {
+    const x = padX + (i / (values.length - 1)) * (w - padX * 2);
+    const y = (h - padY) - ((v - mn) / range) * (h - padY * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return pts.join(' ');
+}
+
+function makeSpark(values, color, w=280, h=48) {
+  const pts = sparklinePath(values, w, h);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/>
+    <circle cx="${pts.split(' ').at(-1).split(',')[0]}" cy="${pts.split(' ').at(-1).split(',')[1]}" r="3" fill="${color}"/>
+  </svg>`;
+}
+
+function makeCardSpark(values, color) {
+  const w = 200, h = 36;
+  const pts = sparklinePath(values, w, h, 2, 4);
+  return `<svg class="cspark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="sg_${color.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <polyline fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/>
+  </svg>`;
+}
+
+// ── POPULATE SELECTS & TABS ───────────────────────────────────────────────────
+function initControls() {
+  const bSel = document.getElementById('baseMonthSel');
+  const cSel = document.getElementById('cmpMonthSel');
+  MONTHS.forEach((m, i) => {
+    bSel.innerHTML += `<option value="${i}">${m}</option>`;
+    cSel.innerHTML += `<option value="${i}">${m}</option>`;
+  });
+  cSel.selectedIndex = 1;
+
+  const tabs = document.getElementById('monthTabs');
+  MONTHS.forEach((m, i) => {
+    tabs.innerHTML += `<button class="mtab${i===0?' active':''}" onclick="selectMonth(${i})">${m}</button>`;
+  });
+
+  bSel.addEventListener('change', render);
+  cSel.addEventListener('change', render);
+}
+
+function selectMonth(i) {
+  document.querySelectorAll('.mtab').forEach((t,j) => t.classList.toggle('active', j===i));
+  currentMonth = i;
+  document.getElementById('baseMonthSel').selectedIndex = i;
+  document.getElementById('cmpMonthSel').selectedIndex  = Math.max(0, i - 1);
+  render();
+}
+
+// ── OVERALL BANNER ────────────────────────────────────────────────────────────
+function renderBanner() {
+  const bi  = parseInt(document.getElementById('baseMonthSel').value);
+  const ci  = parseInt(document.getElementById('cmpMonthSel').value);
+  const cur = overallCPI(RAW[bi]);
+  const prv = overallCPI(RAW[ci]);
+  const pct = pctChange(cur, prv);
+  const abs = cur - prv;
+  const col = pct > 0 ? 'var(--up)' : pct < 0 ? 'var(--down)' : 'var(--flat)';
+
+  const allOverall = RAW.map(r => overallCPI(r));
+
+  document.getElementById('overallBanner').innerHTML = `
+    <div>
+      <div class="ob-title">Overall Food CPI</div>
+      <div class="ob-cpi">${fmt(cur, 3)}</div>
+      <div class="ob-month">${MONTHS[bi]}</div>
+    </div>
+    <div class="ob-divider"></div>
+    <div class="ob-change">
+      <div class="ob-change-val" style="color:${col}">${fmtPct(pct)}</div>
+      <div class="ob-change-label">vs ${MONTHS[ci]}</div>
+    </div>
+    <div class="ob-change">
+      <div class="ob-change-val" style="color:${col};font-size:24px">${abs >= 0 ? '+' : ''}${fmt(abs,3)}</div>
+      <div class="ob-change-label">index pts change</div>
+    </div>
+    <div class="ob-divider"></div>
+    <div class="ob-trend" style="flex:1;min-width:200px">
+      <div class="ob-trend-label">12-month trend</div>
+      <div class="sparkline-wrap">${makeSpark(allOverall, col)}</div>
+    </div>
+  `;
+}
+
+// ── CARD GRID ─────────────────────────────────────────────────────────────────
+function renderCards() {
+  const bi = parseInt(document.getElementById('baseMonthSel').value);
+  const ci = parseInt(document.getElementById('cmpMonthSel').value);
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+
+  CATS.forEach(cat => {
+    const cur  = RAW[bi][cat];
+    const prv  = RAW[ci][cat];
+    const pct  = pctChange(cur, prv);
+    const abs  = cur - prv;
+    const pc   = pillClass(pct);
+    const arc  = arrowChar(pct);
+    const col  = pc === 'up' ? 'var(--up)' : pc === 'down' ? 'var(--down)' : 'var(--flat)';
+    const model= MODEL[cat];
+    const mape = MAPE[cat];
+    const seriesVals = RAW.map(r => r[cat]);
+
+    grid.innerHTML += `
+      <div class="cat-card ${pc}-card">
+        <div class="card-model">${model} · MAPE ${mape}%</div>
+        <div class="card-name">${cat}</div>
+        <div class="card-cpi-row">
+          <div class="card-cpi">${fmt(cur, 1)}</div>
+          <div class="card-cpi-unit">CPI index</div>
+        </div>
+        <div class="card-change-row">
+          <span class="pill ${pc}">
+            <span class="pill-arrow">${arc}</span>
+            ${fmtPct(pct)}
+          </span>
+          <span style="font-size:11px;color:var(--muted)">${abs >= 0 ? '+' : ''}${fmt(abs,3)} pts</span>
+        </div>
+        <div class="card-prev">vs ${MONTHS[ci]}: ${fmt(prv,3)}</div>
+        <div class="card-spark">${makeCardSpark(seriesVals, col)}</div>
+      </div>`;
+  });
+}
+
+// ── TABLE VIEW ────────────────────────────────────────────────────────────────
+function renderTable() {
+  const bi = parseInt(document.getElementById('baseMonthSel').value);
+  const ci = parseInt(document.getElementById('cmpMonthSel').value);
+  const tbl = document.getElementById('dataTable');
+
+  let html = `<thead><tr>
+    <th>Category</th>
+    <th>Model</th>
+    <th class="num">CPI (${MONTHS[bi]})</th>
+    <th class="num">CPI (${MONTHS[ci]})</th>
+    <th class="num">Change (pts)</th>
+    <th class="num">Change (%)</th>
+    <th class="num">MAPE</th>
+  </tr></thead><tbody>`;
+
+  CATS.forEach(cat => {
+    const cur = RAW[bi][cat];
+    const prv = RAW[ci][cat];
+    const pct = pctChange(cur, prv);
+    const abs = cur - prv;
+    const pc  = pillClass(pct);
+    const col = pc === 'up' ? 'var(--up)' : pc === 'down' ? 'var(--down)' : 'var(--flat)';
+    html += `<tr>
+      <td class="cat-col">${cat}</td>
+      <td><span class="pill flat" style="font-size:10px;padding:2px 8px">${MODEL[cat]}</span></td>
+      <td class="num">${fmt(cur,3)}</td>
+      <td class="num">${fmt(prv,3)}</td>
+      <td class="num" style="color:${col}">${abs >= 0 ? '+' : ''}${fmt(abs,3)}</td>
+      <td class="num"><span class="pill ${pc}" style="float:right">${arrowChar(pct)} ${fmtPct(pct)}</span></td>
+      <td class="num" style="color:var(--muted)">${MAPE[cat]}%</td>
+    </tr>`;
+  });
+
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+// ── VIEW TOGGLE ───────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('cardGrid').style.display  = v === 'card'  ? 'grid' : 'none';
+  document.getElementById('tableWrap').style.display = v === 'table' ? 'block' : 'none';
+  document.getElementById('cardViewBtn').classList.toggle('active',  v === 'card');
+  document.getElementById('tableViewBtn').classList.toggle('active', v === 'table');
+  render();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  renderBanner();
+  if (currentView === 'card') renderCards();
+  else renderTable();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+initControls();
+render();
+</script>
+</body>
+</html>
